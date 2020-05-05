@@ -2,7 +2,10 @@ package com.example.sensorp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,28 +14,38 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Main2Activity extends AppCompatActivity implements SensorEventListener {
+    View hidden_layout,all_layout,MainLayout;
+    EditText hiddenET;
     TextView x, y, z;
-    Button left, right, top, bottom, stop, predict,forward,backward,train;
+    Button left, right, top, bottom, stop, predict,forward,backward,train,hiddenButton;
     private Sensor mySensor;
     private SensorManager SM;
-    int l = 0, r = 0, t = 0, b = 0, flag = 0, recordata = 0;
+    int l = 0, r = 0, t = 0, b = 0, flag = 0, recordata = 0,Prediction_status=-1,VolumeControl=-1;
     long MillisecondTime, StartTime, TimeBuff, UpdateTime = 0L;
     int Seconds, Minutes, MilliSeconds;
     Handler handler;
-    List<Double[]> records = new ArrayList<Double[]>();
+    String records ="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+        hidden_layout=findViewById(R.id.hidden_widget);
+        all_layout=findViewById(R.id.all_widgets);
+        MainLayout=findViewById(R.id.MainLayout);
+
+        hiddenET=findViewById(R.id.hiddenEditText);
+        hiddenButton=findViewById(R.id.hiddenButton);
         x = findViewById(R.id.xaxis);
         y = findViewById(R.id.yaxis);
         z = findViewById(R.id.zaxis);
@@ -100,17 +113,37 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 Log.d("message@@", "clicked");
             }
         });
+        hiddenButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String pass=hiddenET.getText().toString();
+                if(pass.equals("0000")){
+                    all_layout.setVisibility(View.VISIBLE);
+                    hidden_layout.setVisibility(View.GONE);
+                    MainLayout.setBackgroundColor(Color.WHITE);
+                    Prediction_status=-1;
+                }
+            }
+        });
         predict.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    Intent k = new Intent(getApplicationContext(), Predict.class);
-                    startActivity(k);
-                    finish();
-                    Log.d("message@@","predict clicked");
-                } catch(Exception e) {
-                    e.printStackTrace();
+                if(Prediction_status==-1){
+                    all_layout.setVisibility(View.GONE);
+                    hidden_layout.setVisibility(View.VISIBLE);
+                    MainLayout.setBackgroundColor(Color.BLACK);
+                    Prediction_status=1;
                 }
+//                try {
+//                    Intent k = new Intent(getApplicationContext(), Predict.class);
+//                    startActivity(k);
+//                    finish();
+//                    Log.d("message@@","predict clicked");
+//                } catch(Exception e) {
+//                    e.printStackTrace();
+//                }
+
+                //--------------------------------------------
 //                if (flag == 0) {
 //                    flag = -1;
 //                    recordata = -1;
@@ -150,6 +183,15 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 finish();
             }
         });
+    }
+// locking navigation button
+    @Override
+    protected void onPause() {
+        super.onPause();
+            ActivityManager activityManager = (ActivityManager) getApplicationContext()
+                    .getSystemService(Context.ACTIVITY_SERVICE);
+
+            activityManager.moveTaskToFront(getTaskId(), 0);
     }
 
     public void startClock() {
@@ -194,11 +236,9 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
         y.setText("Y: " + sensorEvent.values[1]);
         z.setText("Z: " + sensorEvent.values[2]);
         if (recordata == -1) {
-            Double arr[] = new Double[3];
-            arr[0] = (double)sensorEvent.values[0];
-            arr[1] = (double)sensorEvent.values[1];
-            arr[2] = (double)sensorEvent.values[2];
-            records.add(arr);
+            records=records+"\n"+Double.toString((double)sensorEvent.values[0])+" "
+                    +Double.toString((double)sensorEvent.values[1])+" "
+                    +Double.toString((double)sensorEvent.values[2]);
         } else {
             if (l == 1) {
                 Log.d("left@", "x: " + sensorEvent.values[0] + " y: " + sensorEvent.values[1] + " z: " + sensorEvent.values[2] + " " + "" + Minutes + ":"
@@ -267,5 +307,76 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
         double varz=sqDiffz/(double)records.size();
         String newstring=varx+" "+vary+" "+varz;
         return newstring;
+    }
+
+// CONTROLLING ALL THE HARDWARE KEYS
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int action=event.getAction();
+        int keycode=event.getKeyCode();
+        switch(keycode){
+            case KeyEvent.KEYCODE_VOLUME_UP:{
+                if(KeyEvent.ACTION_DOWN==action && Prediction_status==1){
+                    if(VolumeControl==-1) {
+                        records = "Predicting";
+                        flag = -1;
+                        recordata = -1;
+                        Log.d("volume", "down");
+                        VolumeControl=1;
+                    }
+                }
+                else{
+                    VolumeControl=-1;
+                    flag = 0;
+                    recordata = 0;
+                    records = records+"\nend";
+                    if(records.length()>0){
+                        MessageSender ms = new MessageSender();
+                        ms.execute(records);
+                        Log.d("volume",records );
+                        records="";
+                    }
+                    Log.d("volume","up");
+                }
+                break;
+            }
+            case KeyEvent.KEYCODE_VOLUME_DOWN:{
+                if(KeyEvent.ACTION_DOWN==action && Prediction_status==1){
+                    if(VolumeControl==-1) {
+                        records = "Predicting";
+                        flag = -1;
+                        recordata = -1;
+                        Log.d("volume", "down");
+                        VolumeControl=1;
+                    }
+                }
+                else{
+                    VolumeControl=-1;
+                    flag = 0;
+                    recordata = 0;
+                    records = records+"\nend";
+                    if(records.length()>0){
+                        MessageSender ms = new MessageSender();
+                        ms.execute(records);
+                        Log.d("volume",records );
+                        records="";
+                    }
+                    Log.d("volume","up");
+                }
+                break;
+            }
+            case  KeyEvent.KEYCODE_BACK:{
+                return true;
+            }
+//            case KeyEvent.KEYCODE_NAVIGATE_IN:{
+//                return true;
+//            }
+//            case KeyEvent.KEYCODE_NAVIGATE_OUT:{
+//                return true;
+//            }
+        }
+        //returning true because we dont want to increase volume
+        return true;
+//        return super.dispatchKeyEvent(event);
     }
 }

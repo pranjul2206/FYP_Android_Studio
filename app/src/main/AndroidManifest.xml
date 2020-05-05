@@ -3,6 +3,8 @@
     package="com.example.sensorp">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
 
     <application
         android:allowBackup="true"
@@ -11,7 +13,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Train"></activity>
+        <service
+            android:name=".MyForegroundService"
+            android:enabled="true"
+            android:exported="false"></service>
+
+        <activity android:name=".Train" />
         <activity android:name=".Predict" />
         <activity android:name=".Main2Activity" />
         <activity android:name=".MainActivity">
