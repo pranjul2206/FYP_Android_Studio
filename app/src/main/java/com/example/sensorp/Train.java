@@ -2,6 +2,7 @@ package com.example.sensorp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Bundle;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -18,21 +19,22 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Main2Activity extends AppCompatActivity implements SensorEventListener {
+public class Train extends AppCompatActivity implements SensorEventListener {
     TextView x, y, z;
-    Button left, right, top, bottom, stop, predict,forward,backward,train;
+    Button left, right, top, bottom, CaptureData, train;
     private Sensor mySensor;
     private SensorManager SM;
     int l = 0, r = 0, t = 0, b = 0, flag = 0, recordata = 0;
     long MillisecondTime, StartTime, TimeBuff, UpdateTime = 0L;
     int Seconds, Minutes, MilliSeconds;
     Handler handler;
-    List<Double[]> records = new ArrayList<Double[]>();
+//    List<Double[]> records = new ArrayList<Double[]>();
+    String records="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
+        setContentView(R.layout.activity_train);
         x = findViewById(R.id.xaxis);
         y = findViewById(R.id.yaxis);
         z = findViewById(R.id.zaxis);
@@ -40,11 +42,8 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
         right = findViewById(R.id.right);
         top = findViewById(R.id.top);
         bottom = findViewById(R.id.bottom);
-        stop = findViewById(R.id.stop);
-        predict = findViewById(R.id.predict);
-        forward=findViewById(R.id.forward);
-        backward=findViewById(R.id.backward);
-        train=findViewById(R.id.train);
+        CaptureData = findViewById(R.id.CaptureData);
+        train = findViewById(R.id.train);
         SM = (SensorManager) getSystemService(SENSOR_SERVICE);
         mySensor = SM.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         handler = new Handler();
@@ -56,6 +55,9 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 r = 0;
                 t = 0;
                 b = 0;
+                flag = -1;
+                recordata = -1;
+                records="CaptureData\nleft";
                 startClock();
             }
         });
@@ -66,6 +68,9 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 r = 1;
                 t = 0;
                 b = 0;
+                flag = -1;
+                recordata = -1;
+                records="CaptureData\nright";
                 startClock();
             }
         });
@@ -76,6 +81,9 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 r = 0;
                 t = 1;
                 b = 0;
+                flag = -1;
+                recordata = -1;
+                records="CaptureData\ntop";
                 startClock();
             }
         });
@@ -86,68 +94,36 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
                 r = 0;
                 t = 0;
                 b = 1;
+                flag = -1;
+                recordata = -1;
+                records="CaptureData\nbottom";
                 startClock();
             }
         });
-        stop.setOnClickListener(new View.OnClickListener() {
+        CaptureData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 l = -1;
                 r = -1;
                 t = -1;
                 b = -1;
-                stopClock();
                 Log.d("message@@", "clicked");
-            }
-        });
-        predict.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    Intent k = new Intent(getApplicationContext(), Predict.class);
-                    startActivity(k);
-                    finish();
-                    Log.d("message@@","predict clicked");
-                } catch(Exception e) {
-                    e.printStackTrace();
+                flag = 0;
+                recordata = 0;
+                records = records+"\nend";
+                if(records.length()>0){
+                    MessageSender ms = new MessageSender();
+                    ms.execute(records);
+                    Log.d("message@@",records );
                 }
-//                if (flag == 0) {
-//                    flag = -1;
-//                    recordata = -1;
-//                } else {
-//                    flag = 0;
-//                    recordata = 0;
-//                    String newstring="predicting\n";
-//                    newstring+=CalculateVariance(records);
-//                    MessageSender ms = new MessageSender();
-////                    ms.execute("predict");
-//                    ms.execute(newstring);
-//                    Log.d("message@@",newstring );
-//                }
-            }
-        });
-        forward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MessageSender ms = new MessageSender();
-//                    ms.execute("predict");
-                ms.execute("forward");
-            }
-        });
-        backward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MessageSender ms = new MessageSender();
-//                    ms.execute("predict");
-                ms.execute("backward");
+                stopClock();
             }
         });
         train.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent=new Intent(Main2Activity.this,Train.class);
-                startActivity(intent);
-                finish();
+                MessageSender ms = new MessageSender();
+                ms.execute("train");
             }
         });
     }
@@ -187,18 +163,15 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
         }
 
     };
-
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         x.setText("X: " + sensorEvent.values[0]);
         y.setText("Y: " + sensorEvent.values[1]);
         z.setText("Z: " + sensorEvent.values[2]);
         if (recordata == -1) {
-            Double arr[] = new Double[3];
-            arr[0] = (double)sensorEvent.values[0];
-            arr[1] = (double)sensorEvent.values[1];
-            arr[2] = (double)sensorEvent.values[2];
-            records.add(arr);
+            records=records+"\n"+Double.toString((double)sensorEvent.values[0])+" "
+                    +Double.toString((double)sensorEvent.values[1])+" "
+                    +Double.toString((double)sensorEvent.values[2]);
         } else {
             if (l == 1) {
                 Log.d("left@", "x: " + sensorEvent.values[0] + " y: " + sensorEvent.values[1] + " z: " + sensorEvent.values[2] + " " + "" + Minutes + ":"
@@ -224,48 +197,5 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
-    }
-
-    public String CalculateVariance(List<Double[]> records) {
-        double sumx = 0;
-        double sumy = 0;
-        double sumz = 0;
-        for (int i = 0; i < records.size(); i++) {
-
-            // = new String[5];
-            Double[] myString = records.get(i);
-            // System.out.println("printing"+myString.length);
-//            System.out.println(i + 1);
-            Log.d("message@@", (i + 1)+"");
-            for(int j = 0; j < myString.length; j++) {
-//                System.out.print(myString[j] + " * ");
-                Log.d("message@@", myString[j]+"");
-            }
-            sumx += myString[0];
-            sumy += myString[1];
-            sumz += myString[2];
-
-        }
-        double meanx = (double)sumx /(double)records.size();
-        double meany = (double)sumy /(double)records.size();
-        double meanz = (double)sumz /(double)records.size();
-        double sqDiffx = 0;
-        double sqDiffy = 0;
-        double sqDiffz = 0;
-        for(int i=0;i<records.size();i++){
-
-            Double[] myString= new Double[5];
-            myString=records.get(i);
-            sqDiffx += (myString[0] - meanx) *  (myString[0] - meanx);
-            sqDiffy += (myString[1] - meany) *  (myString[1] - meany);
-            sqDiffz += (myString[2] - meanz) *  (myString[2] - meanz);
-
-
-        }
-        double varx=sqDiffx/(double)records.size();
-        double vary=sqDiffy/(double)records.size();
-        double varz=sqDiffz/(double)records.size();
-        String newstring=varx+" "+vary+" "+varz;
-        return newstring;
     }
 }
