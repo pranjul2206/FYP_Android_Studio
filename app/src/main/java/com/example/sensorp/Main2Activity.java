@@ -343,26 +343,29 @@ public class Main2Activity extends AppCompatActivity implements SensorEventListe
             case KeyEvent.KEYCODE_VOLUME_DOWN:{
                 if(KeyEvent.ACTION_DOWN==action && Prediction_status==1){
                     if(VolumeControl==-1) {
-                        records = "Predicting";
-                        flag = -1;
-                        recordata = -1;
-                        Log.d("volume", "down");
-                        VolumeControl=1;
+//                        records = "Predicting";
+//                        flag = -1;
+//                        recordata = -1;
+//                        Log.d("volume", "down");
+//                        VolumeControl=1;
+                        Intent intent=new Intent(Main2Activity.this,MouseActivity.class);
+                        startActivity(intent);
+                        finish();
                     }
                 }
-                else{
-                    VolumeControl=-1;
-                    flag = 0;
-                    recordata = 0;
-                    records = records+"\nend";
-                    if(records.length()>0){
-                        MessageSender ms = new MessageSender();
-                        ms.execute(records);
-                        Log.d("volume",records );
-                        records="";
-                    }
-                    Log.d("volume","up");
-                }
+//                else{
+//                    VolumeControl=-1;
+//                    flag = 0;
+//                    recordata = 0;
+//                    records = records+"\nend";
+//                    if(records.length()>0){
+//                        MessageSender ms = new MessageSender();
+//                        ms.execute(records);
+//                        Log.d("volume",records );
+//                        records="";
+//                    }
+//                    Log.d("volume","up");
+//                }
                 break;
             }
             case  KeyEvent.KEYCODE_BACK:{

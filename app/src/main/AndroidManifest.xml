@@ -3,7 +3,7 @@
     package="com.example.sensorp">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
 
     <application
@@ -13,10 +13,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".MouseActivity"></activity>
+        <activity android:name=".Page_PPT" />
+        <activity android:name=".Page_EnterIP" />
+
         <service
             android:name=".MyForegroundService"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false" />
 
         <activity android:name=".Train" />
         <activity android:name=".Predict" />
